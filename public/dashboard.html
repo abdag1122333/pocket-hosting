@@ -380,7 +380,10 @@
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 style="margin:0">Live Terminal</h2>
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                        <input type="checkbox" id="pauseLogs"> Pause Logs
+                    </label>
                     <button class="btn btn-primary" onclick="startServer()"><i class="ri-play-fill"></i> Start</button>
                     <button class="btn btn-danger" onclick="stopServer()"><i class="ri-stop-fill"></i> Stop</button>
                 </div>
@@ -394,7 +397,7 @@
                         class="ri-send-plane-fill"></i></button>
             </div>
 
-            <div class="terminal" id="terminal">Waiting for logs...</div>
+            <div class="terminal" id="terminal" style="user-select: text;">Waiting for logs...</div>
         </div>
     </div>
 
@@ -510,10 +513,13 @@
         }
 
         async function updateLogs() {
+            if ($('pauseLogs').checked) return; // Don't update if paused
+
             try {
                 const res = await fetch('/api/logs');
                 const logs = await res.json();
                 const term = $('terminal');
+
                 // Format logs
                 const formatted = logs.map(l => {
                     if (l.includes('[ERR]')) return `<span class="log-err">${l}</span>`;
@@ -522,8 +528,9 @@
                 }).join('\n');
 
                 if (term.innerHTML !== formatted) {
+                    const isAtBottom = term.scrollHeight - term.scrollTop - term.clientHeight < 50;
                     term.innerHTML = formatted;
-                    term.scrollTop = term.scrollHeight;
+                    if (isAtBottom) term.scrollTop = term.scrollHeight; // Only auto-scroll if already at bottom
                 }
             } catch (e) { }
         }

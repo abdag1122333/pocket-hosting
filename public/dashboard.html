@@ -592,20 +592,29 @@
         }
 
         function setPreset(type) {
-            if (type === 'node') $('cmdInput').value = 'npm install && node index.js';
-            if (type === 'python') $('cmdInput').value = 'pip install -r requirements.txt --break-system-packages && python main.py';
-            if (type === 'bash') $('cmdInput').value = 'bash start.sh';
-
-            // Experimental Game Presets (Downloads portable runtimes)
-            if (type === 'minecraft') {
-                alert('⚠️ Minecraft Requirement:\nUpload your "server.jar" first!\n\nThis preset will auto-download Java 17 each time.');
-                $('cmdInput').value = 'curl -sL https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz | tar xz && ./jdk-17.0.11/bin/java -Xmx512M -jar server.jar nogui';
+            const input = $('cmdInput');
+            switch (type) {
+                case 'node':
+                    input.value = 'npm install && node index.js';
+                    break;
+                case 'python':
+                    input.value = 'pip install -r requirements.txt --break-system-packages && python main.py';
+                    break;
+                case 'bash':
+                    input.value = 'bash start.sh';
+                    break;
+                case 'minecraft':
+                    alert('⚠️ Minecraft Requirement:\nUpload your "server.jar" first!\n\nThis preset will auto-download Java 17 each time.');
+                    input.value = 'curl -sL https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz | tar xz && ./jdk-17.0.11/bin/java -Xmx512M -jar server.jar nogui';
+                    break;
+                case 'mta':
+                    alert('⚠️ MTA Setup:\nAdding missing resources & configs...\n\nYour server should start correctly after this.');
+                    input.value = '[ ! -f mta-server64 ] && curl -L -o mta.tar.gz https://linux.mtasa.com/dl/multitheftauto_linux_x64.tar.gz && tar -xf mta.tar.gz --strip-components=1 && rm mta.tar.gz; [ ! -f mods/deathmatch/mtaserver.conf ] && curl -L -o config.tar.gz https://linux.mtasa.com/dl/baseconfig.tar.gz && tar -xf config.tar.gz --strip-components=1 && rm config.tar.gz; chmod +x mta-server64 && ./mta-server64';
+                    break;
+                case 'custom':
+                    input.value = './my-custom-script.sh';
+                    break;
             }
-            if (type === 'mta') {
-                alert('⚠️ MTA Setup:\nAdding missing resources & configs...\n\nYour server should start correctly after this.');
-                $('cmdInput').value = '[ ! -f mta-server64 ] && curl -L -o mta.tar.gz https://linux.mtasa.com/dl/multitheftauto_linux_x64.tar.gz && tar -xf mta.tar.gz --strip-components=1 && rm mta.tar.gz; [ ! -f mods/deathmatch/mtaserver.conf ] && curl -L -o config.tar.gz https://linux.mtasa.com/dl/baseconfig.tar.gz && tar -xf config.tar.gz --strip-components=1 && rm config.tar.gz; chmod +x mta-server64 && ./mta-server64';
-            }
-            if (type === 'custom') $('cmdInput').value = './my-custom-script.sh';
         }
 
         // --- Files ---

@@ -1,0 +1,18 @@
+# Core Discord Library
+discord.py
+
+# AI & Machine Learning
+google-generativeai
+openai
+
+# Utilities & Networking
+python-dotenv
+requests
+aiohttp
+bs4
+
+# Image Processing
+pillow
+
+# Terminal & Formatting
+colorama

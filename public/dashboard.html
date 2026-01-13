@@ -569,8 +569,8 @@
         }
 
         function setPreset(type) {
-            if (type === 'node') $('cmdInput').value = 'node index.js';
-            if (type === 'python') $('cmdInput').value = 'python main.py';
+            if (type === 'node') $('cmdInput').value = 'npm install && node index.js';
+            if (type === 'python') $('cmdInput').value = 'pip install -r requirements.txt --break-system-packages && python main.py';
             if (type === 'bash') $('cmdInput').value = 'bash start.sh';
         }
 

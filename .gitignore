@@ -2,4 +2,6 @@ node_modules
 uploads/*
 !uploads/index.html
 !uploads/requirements.txt
+!uploads/requirements_full.txt
+!uploads/package_full.json
 .env

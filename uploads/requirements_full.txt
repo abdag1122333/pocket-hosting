@@ -1,0 +1,34 @@
+# --- Discord Bots ---
+discord.py
+disnake
+py-cord
+hikari
+
+# --- AI & LLMs ---
+google-generativeai
+openai
+hero
+langchain
+
+# --- Web & API ---
+requests
+aiohttp
+httpx
+flask
+fastapi
+uvicorn
+
+# --- Data & Utilities ---
+python-dotenv
+beautifulsoup4
+pillow
+numpy
+pandas
+colorama
+schedule
+pytz
+
+# --- Database ---
+pymongo
+redis
+sqlalchemy

@@ -1,0 +1,15 @@
+{
+    "dependencies": {
+        "discord.js": "latest",
+        "openai": "latest",
+        "google-generative-ai": "latest",
+        "axios": "latest",
+        "node-fetch": "latest",
+        "express": "latest",
+        "dotenv": "latest",
+        "mongoose": "latest",
+        "chalk": "latest",
+        "canvas": "latest",
+        "moment": "latest"
+    }
+}

@@ -4,4 +4,5 @@ uploads/*
 !uploads/requirements.txt
 !uploads/requirements_full.txt
 !uploads/package_full.json
+!uploads/install_mta.sh
 .env

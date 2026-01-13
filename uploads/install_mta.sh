@@ -107,7 +107,8 @@ else
     echo "⚠️ No saved config found at: $CONFIG_FILE"
     echo "   (Current Dir contents: $(ls))"
     echo "Look for the 'CLAIM URL' below to setup!"
-    ./playit &
+    # FORCE it to create the file here, not in ~/.config
+    ./playit --config "$CONFIG_FILE" &
 fi
 sleep 5
 

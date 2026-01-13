@@ -604,9 +604,9 @@
                     input.value = 'bash start.sh';
                     break;
                 case 'minecraft':
-                    alert('⚠️ Minecraft Requirement:\nUpload your "server.jar" first!\n\nThis preset will auto-download Java 17 (OpenJDK).');
-                    // Using Adoptium (Temurin) for reliable, auth-free downloads
-                    $('cmdInput').value = 'mkdir -p jdk17 && curl -L "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse?project=jdk" | tar xz -C jdk17 --strip-components=1 && ./jdk17/bin/java -Xmx1G -Xms512M -jar server.jar nogui';
+                    alert('⚠️ Minecraft Requirement:\nUpload your "server.jar" first!\n\nThis preset will auto-download Amazon Corretto 17 (High Performance).');
+                    // Using Amazon Corretto for maximum stability and speed
+                    $('cmdInput').value = 'curl -L -o java.tar.gz https://corretto.aws/downloads/latest/amazon-corretto-17-x64-linux-jdk.tar.gz && tar -xf java.tar.gz && rm java.tar.gz && mv amazon-corretto-17* jdk17 && ./jdk17/bin/java -Xmx1G -Xms512M -jar server.jar nogui';
                     break;
                 case 'mta':
                     alert('⚠️ MTA Setup:\nUsing new "Robust Installer" script.\nIt will fix the config errors automatically.');

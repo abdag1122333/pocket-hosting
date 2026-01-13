@@ -2,370 +2,285 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-
+const { spawn, exec } = require('child_process');
 const app = express();
 const port = 3000;
 
-// Setup storage
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const uploadDir = './uploads';
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir);
-        }
-        cb(null, uploadDir)
-    },
-    filename: function (req, file, cb) {
-        cb(null, file.originalname)
-    }
-});
+// Config
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+// Storage Engine
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dir = './uploads';
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => cb(null, file.originalname)
+});
 const upload = multer({ storage: storage });
 
-// Serve static files (uploaded files)
-app.use('/files', express.static(path.join(__dirname, 'uploads')));
+// Global State for "Running Process"
+let runningProcess = null;
+let logBuffer = [];
 
-// Premium Dark Dashboard UI
-app.get('/', (req, res) => {
-    const uploadDir = './uploads';
-    if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir);
-    }
+function addToLog(data) {
+    const lines = data.toString().split('\n');
+    lines.forEach(line => {
+        if (line.trim()) {
+            logBuffer.push(`[${new Date().toLocaleTimeString()}] ${line}`);
+            if (logBuffer.length > 500) logBuffer.shift(); // Keep last 500 lines
+        }
+    });
+}
 
-    const uptime = new Date(process.uptime() * 1000).toISOString().substr(11, 8);
+// Routes
+app.use('/files', express.static('uploads'));
 
-    fs.readdir(uploadDir, (err, files) => {
-        let fileListHtml = files.map(f => `
-            <div class="file-card">
-                <div class="file-icon">📄</div>
-                <div class="file-info">
-                    <span class="file-name">${f}</span>
-                    <span class="file-meta">${(fs.statSync(path.join(uploadDir, f)).size / 1024).toFixed(1)} KB</span>
-                </div>
-                <div class="file-actions">
-                    <a href="/files/${f}" download class="btn-action btn-download" title="Download">⬇️</a>
-                    <a href="/files/${f}" target="_blank" class="btn-action btn-view" title="View">👁️</a>
-                </div>
-            </div>
-        `).join('');
+// API: File Manager
+app.get('/api/files', (req, res) => {
+    const dir = './uploads';
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
 
-        res.send(`
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>🚀 Pocket Console</title>
-                <style>
-                    :root {
-                        --bg-dark: #0f1014;
-                        --bg-card: #1b1e2b;
-                        --primary: #5865F2; /* Discord Blurple */
-                        --accent: #00cec9;
-                        --text-main: #ffffff;
-                        --text-muted: #a0a0a0;
-                        --success: #2ecc71;
-                        --danger: #e74c3c;
-                    }
-
-                    body {
-                        font-family: 'Segoe UI', 'Roboto', sans-serif;
-                        background-color: var(--bg-dark);
-                        color: var(--text-main);
-                        margin: 0;
-                        padding: 0;
-                        min-height: 100vh;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                    }
-
-                    .navbar {
-                        width: 100%;
-                        background: rgba(27, 30, 43, 0.9);
-                        padding: 15px 0;
-                        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-                        backdrop-filter: blur(10px);
-                        position: sticky;
-                        top: 0;
-                        z-index: 100;
-                        border-bottom: 1px solid #333;
-                    }
-
-                    .nav-content {
-                        max-width: 1000px;
-                        margin: 0 auto;
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        padding: 0 20px;
-                    }
-
-                    .logo {
-                        font-size: 1.5rem;
-                        font-weight: 800;
-                        color: var(--text-main);
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-                    }
-
-                    .logo span { color: var(--primary); }
-
-                    .status-badge {
-                        background: rgba(46, 204, 113, 0.2);
-                        color: var(--success);
-                        padding: 5px 12px;
-                        border-radius: 20px;
-                        font-size: 0.85rem;
-                        font-weight: 600;
-                        display: flex;
-                        align-items: center;
-                        gap: 8px;
-                    }
-
-                    .status-dot {
-                        width: 8px;
-                        height: 8px;
-                        background: var(--success);
-                        border-radius: 50%;
-                        box-shadow: 0 0 10px var(--success);
-                        animation: pulse 2s infinite;
-                    }
-
-                    @keyframes pulse {
-                        0% { opacity: 1; }
-                        50% { opacity: 0.5; }
-                        100% { opacity: 1; }
-                    }
-
-                    .main-container {
-                        width: 100%;
-                        max-width: 1000px;
-                        margin: 30px auto;
-                        padding: 0 20px;
-                        display: grid;
-                        grid-template-columns: 1fr 300px;
-                        gap: 25px;
-                    }
-
-                    @media (max-width: 768px) {
-                        .main-container { grid-template-columns: 1fr; }
-                    }
-
-                    .card {
-                        background: var(--bg-card);
-                        border-radius: 16px;
-                        padding: 25px;
-                        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-                        border: 1px solid #2a2d3d;
-                    }
-
-                    h2 { margin-top: 0; font-size: 1.2rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-
-                    /* Upload Zone */
-                    .upload-zone {
-                        border: 2px dashed #3a3f55;
-                        border-radius: 12px;
-                        padding: 40px;
-                        text-align: center;
-                        transition: all 0.3s;
-                        cursor: pointer;
-                        position: relative;
-                        background: rgba(255,255,255,0.02);
-                        margin-bottom: 20px;
-                    }
-
-                    .upload-zone:hover {
-                        border-color: var(--primary);
-                        background: rgba(88, 101, 242, 0.05);
-                    }
-
-                    .file-input {
-                        position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
-                    }
-
-                    .upload-icon { font-size: 3rem; margin-bottom: 15px; opacity: 0.7; }
-                    
-                    /* File List */
-                    .file-list {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 10px;
-                    }
-
-                    .file-card {
-                        background: rgba(255,255,255,0.03);
-                        padding: 12px 15px;
-                        border-radius: 8px;
-                        display: flex;
-                        align-items: center;
-                        border: 1px solid transparent;
-                        transition: all 0.2s;
-                    }
-
-                    .file-card:hover {
-                        background: rgba(255,255,255,0.05);
-                        border-color: #333;
-                        transform: translateX(5px);
-                    }
-
-                    .file-icon { font-size: 1.2rem; margin-right: 15px; }
-                    
-                    .file-info { flex: 1; display: flex; flex-direction: column; }
-                    .file-name { font-weight: 500; color: var(--text-main); }
-                    .file-meta { font-size: 0.75rem; color: var(--text-muted); }
-
-                    .btn-action {
-                        text-decoration: none;
-                        padding: 8px;
-                        border-radius: 6px;
-                        background: rgba(255,255,255,0.1);
-                        margin-left: 5px;
-                        transition: 0.2s;
-                    }
-                    .btn-action:hover { background: var(--primary); }
-
-                    /* Stats Panel */
-                    .stats-grid {
-                        display: grid;
-                        grid-template-columns: 1fr;
-                        gap: 15px;
-                    }
-
-                    .stat-item {
-                        background: rgba(0,0,0,0.2);
-                        padding: 15px;
-                        border-radius: 10px;
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                    }
-
-                    .stat-label { color: var(--text-muted); font-size: 0.9rem; }
-                    .stat-value { font-weight: bold; font-family: 'Courier New', monospace; color: var(--accent); }
-
-                    /* Power Button */
-                    .power-section {
-                        text-align: center;
-                        margin-top: 20px;
-                        padding-top: 20px;
-                        border-top: 1px solid #333;
-                    }
-
-                    .btn-power {
-                        background: var(--success);
-                        color: white;
-                        border: none;
-                        padding: 12px 40px;
-                        border-radius: 50px;
-                        font-weight: bold;
-                        font-size: 1rem;
-                        cursor: pointer;
-                        box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
-                        transition: all 0.3s;
-                        letter-spacing: 1px;
-                        text-transform: uppercase;
-                    }
-
-                    .btn-power:hover {
-                        transform: scale(1.05);
-                        box-shadow: 0 0 30px rgba(46, 204, 113, 0.6);
-                    }
-                    
-                    .console-log {
-                        background: #000;
-                        color: #0f0;
-                        font-family: 'Courier New', monospace;
-                        padding: 15px;
-                        border-radius: 8px;
-                        font-size: 0.8rem;
-                        margin-top: 20px;
-                        opacity: 0.7;
-                    }
-                </style>
-            </head>
-            <body>
-                <nav class="navbar">
-                    <div class="nav-content">
-                        <div class="logo">⚡ Pocket<span>Host</span></div>
-                        <div class="status-badge">
-                            <div class="status-dot"></div>
-                            Online
-                        </div>
-                    </div>
-                </nav>
-
-                <div class="main-container">
-                    <!-- Right/Main Column -->
-                    <div class="content-col">
-                        <div class="card">
-                            <h2>File Manager</h2>
-                            
-                            <form action="/upload" method="post" enctype="multipart/form-data">
-                                <div class="upload-zone">
-                                    <input type="file" name="anyfile" class="file-input" onchange="this.form.submit()">
-                                    <div class="upload-icon">☁️</div>
-                                    <h3 style="margin:0;">Click or Drop Files</h3>
-                                    <p style="color:var(--text-muted); margin-top:5px;">Instant deploy to your cloud</p>
-                                </div>
-                            </form>
-
-                            <div class="file-list">
-                                ${fileListHtml || '<div style="text-align:center; padding:20px; color:#555;">No files deployed yet.</div>'}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Left/Sidebar Column -->
-                    <div class="sidebar-col">
-                        <div class="card">
-                            <h2>Server Status</h2>
-                            <div class="stats-grid">
-                                <div class="stat-item">
-                                    <span class="stat-label">Uptime</span>
-                                    <span class="stat-value">${uptime}</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Memory</span>
-                                    <span class="stat-value">Healthy</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Port</span>
-                                    <span class="stat-value">:3000</span>
-                                </div>
-                            </div>
-
-                            <div class="power-section">
-                                <button class="btn-power" onclick="window.location.reload()">RESTART UI</button>
-                                <p style="font-size:0.75rem; color:#666; margin-top:10px;">Server is running locally</p>
-                            </div>
-                        </div>
-
-                        <div class="console-log">
-                            > System Initialized...<br>
-                            > Waiting for internal connection...<br>
-                            > Ready to accept files.
-                        </div>
-                    </div>
-                </div>
-            </body>
-            </html>
-        `);
+    fs.readdir(dir, (err, files) => {
+        if (err) return res.json([]);
+        const fileData = files.map(f => {
+            const stats = fs.statSync(path.join(dir, f));
+            return { name: f, size: (stats.size / 1024).toFixed(1) + ' KB', isFile: stats.isFile() };
+        });
+        res.json(fileData);
     });
 });
 
-// Handle Upload
-app.post('/upload', upload.single('anyfile'), (req, res, next) => {
-    const file = req.file;
-    if (!file) {
-        return res.status(400).send('Please upload a file');
-    }
-    res.redirect('/');
+app.post('/api/delete', (req, res) => {
+    try {
+        fs.unlinkSync(path.join('./uploads', req.body.filename));
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.listen(port, () => {
-    console.log(`\n✅ Pocket Hosting is Ready!`);
-    console.log(`🔗 Local Access: http://localhost:${port}`);
-    console.log(`🌍 To make it public, use Cloudflare Tunnel or Playit.gg\n`);
+app.post('/api/read', (req, res) => {
+    try {
+        const content = fs.readFileSync(path.join('./uploads', req.body.filename), 'utf8');
+        res.json({ content });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
+app.post('/api/save', (req, res) => {
+    try {
+        fs.writeFileSync(path.join('./uploads', req.body.filename), req.body.content);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/upload', upload.single('file'), (req, res) => res.json({ success: true }));
+
+// API: Terminal & Process
+app.post('/api/run', (req, res) => {
+    const { command } = req.body;
+
+    if (runningProcess) {
+        return res.json({ success: false, message: 'A process is already running. Stop it first.' });
+    }
+
+    addToLog(`> Starting: ${command}`);
+    const args = command.split(' ');
+    const cmd = args.shift();
+
+    try {
+        runningProcess = spawn(cmd, args, { cwd: './uploads', shell: true });
+
+        runningProcess.stdout.on('data', addToLog);
+        runningProcess.stderr.on('data', addToLog);
+
+        runningProcess.on('close', (code) => {
+            addToLog(`> Process exited with code ${code}`);
+            runningProcess = null;
+        });
+
+        res.json({ success: true, message: 'Process started' });
+    } catch (e) {
+        addToLog(`> Error starting: ${e.message}`);
+        res.json({ success: false, error: e.message });
+    }
+});
+
+app.post('/api/stop', (req, res) => {
+    if (runningProcess) {
+        runningProcess.kill();
+        runningProcess = null;
+        addToLog('> Process stopped by user.');
+        res.json({ success: true });
+    } else {
+        res.json({ success: false, message: 'No process running' });
+    }
+});
+
+app.get('/api/logs', (req, res) => res.json(logBuffer));
+
+// Main UI
+app.get('/', (req, res) => {
+    res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>⚡ Ultimate Pocket Hosting</title>
+        <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+        <style>
+            :root { --bg: #0f172a; --panel: #1e293b; --primary: #3b82f6; --text: #f8fafc; --success: #22c55e; --danger: #ef4444; }
+            * { box-sizing: border-box; }
+            body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; height: 100vh; display: flex; flex-direction: column; }
+            
+            .navbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: var(--panel); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+            .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+            
+            .main-grid { display: grid; grid-template-columns: 350px 1fr; gap: 20px; flex: 1; min-height: 0; }
+            
+            .panel { background: var(--panel); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
+            h2 { margin: 0 0 15px 0; font-size: 1.1rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; }
+            
+            /* File Manager */
+            .file-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+            .file-item { display: flex; align-items: center; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; transition: 0.2s; }
+            .file-item:hover { background: rgba(255,255,255,0.1); }
+            .file-name { flex: 1; margin: 0 10px; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+            .file-actions i { padding: 5px; cursor: pointer; color: #94a3b8; transition: 0.2s; }
+            .file-actions i:hover { color: var(--text); }
+            
+            /* Terminal */
+            .terminal { background: #000; color: #10b981; font-family: 'Courier New', monospace; flex: 1; border-radius: 8px; padding: 15px; overflow-y: auto; font-size: 0.9rem; margin-bottom: 15px; border: 1px solid #334155; }
+            .controls { display: flex; gap: 10px; }
+            input[type="text"] { flex: 1; background: #0f172a; border: 1px solid #334155; color: white; padding: 10px; border-radius: 6px; font-family: monospace; }
+            button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+            button:hover { filter: brightness(110%); }
+            button.red { background: var(--danger); }
+            
+            /* Editor Modal */
+            .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
+            .modal-content { background: var(--panel); width: 80%; height: 80%; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; }
+            textarea { flex: 1; background: #0f172a; color: #e2e8f0; border: none; padding: 15px; font-family: monospace; border-radius: 8px; resize: none; margin: 15px 0; }
+            
+            /* Upload */
+            .drop-zone { border: 2px dashed #475569; padding: 20px; text-align: center; border-radius: 8px; color: #94a3b8; cursor: pointer; transition: 0.2s; margin-bottom: 20px; }
+            .drop-zone:hover { border-color: var(--primary); color: var(--primary); }
+        </style>
+    </head>
+    <body>
+        <div class="navbar">
+            <div class="logo"><i class="ri-server-fill"></i> Pocket Hosting V2</div>
+            <div style="font-size: 0.9rem; color: #94a3b8;">Running on Port ${port}</div>
+        </div>
+
+        <div class="main-grid">
+            <!-- Left: Files -->
+            <div class="panel">
+                <h2>File Manager</h2>
+                <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
+                    <i class="ri-upload-cloud-2-line" style="font-size: 1.5rem;"></i><br>Click to Upload
+                </div>
+                <input type="file" id="fileInput" hidden multiple onchange="uploadFiles(this.files)">
+                <div class="file-list" id="fileList">Loading...</div>
+            </div>
+
+            <!-- Right: Terminal & Editor -->
+            <div class="panel">
+                <h2>Console / Run</h2>
+                <div class="terminal" id="terminalLog">Welcome to Pocket Hosting Terminal...</div>
+                <div class="controls">
+                    <input type="text" id="cmdInput" placeholder="Enter command (e.g., node bot.js)" onkeypress="if(event.key==='Enter') runCommand()">
+                    <button onclick="runCommand()"><i class="ri-play-fill"></i> Run</button>
+                    <button class="red" onclick="stopProcess()"><i class="ri-stop-fill"></i> Stop</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Editor Modal -->
+        <div class="modal" id="editorModal">
+            <div class="modal-content">
+                <h2 id="editingFileName">Editing... <i class="ri-close-line" style="cursor:pointer" onclick="closeEditor()"></i></h2>
+                <textarea id="fileContent"></textarea>
+                <div style="text-align: right;">
+                    <button onclick="saveFile()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // --- Logic ---
+            const $ = id => document.getElementById(id);
+            let currentFile = '';
+            
+            async function loadFiles() {
+                const res = await fetch('/api/files');
+                const files = await res.json();
+                $('fileList').innerHTML = files.map(f => \`
+                    <div class="file-item">
+                        <i class="\${f.isFile ? 'ri-file-text-line' : 'ri-folder-line'}" style="color: #64748b;"></i>
+                        <span class="file-name" onclick="editFile('\${f.name}')">\${f.name}</span>
+                        <div class="file-actions">
+                            <i class="ri-delete-bin-line" onclick="deleteFile('\${f.name}')"></i>
+                        </div>
+                    </div>
+                \`).join('');
+            }
+
+            async function uploadFiles(files) {
+                const formData = new FormData();
+                formData.append('file', files[0]);
+                await fetch('/upload', { method: 'POST', body: formData });
+                loadFiles();
+            }
+
+            async function deleteFile(filename) {
+                if(!confirm('Delete ' + filename + '?')) return;
+                await fetch('/api/delete', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({filename}) });
+                loadFiles();
+            }
+
+            async function editFile(filename) {
+                currentFile = filename;
+                const res = await fetch('/api/read', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({filename}) });
+                const data = await res.json();
+                $('editingFileName').innerText = 'Editing: ' + filename;
+                $('fileContent').value = data.content;
+                $('editorModal').style.display = 'flex';
+            }
+
+            async function saveFile() {
+                await fetch('/api/save', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({filename: currentFile, content: $('fileContent').value}) });
+                closeEditor();
+            }
+
+            function closeEditor() { $('editorModal').style.display = 'none'; }
+
+            async function runCommand() {
+                const command = $('cmdInput').value;
+                if(!command) return;
+                await fetch('/api/run', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({command}) });
+                $('cmdInput').value = '';
+            }
+
+            async function stopProcess() {
+                await fetch('/api/stop', { method: 'POST' });
+            }
+
+            // Real-time Logs
+            setInterval(async () => {
+                const res = await fetch('/api/logs');
+                const logs = await res.json();
+                const term = $('terminalLog');
+                term.innerText = logs.join('\\n');
+                term.scrollTop = term.scrollHeight;
+            }, 1000);
+
+            loadFiles();
+        </script>
+    </body>
+    </html>
+    `);
+});
+
+app.listen(port, () => console.log(\`Pocket Hosting V2 running on port \${port}\`));

@@ -385,6 +385,15 @@
                     <button class="btn btn-danger" onclick="stopServer()"><i class="ri-stop-fill"></i> Stop</button>
                 </div>
             </div>
+
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <input type="text" class="input-box" id="manualInput"
+                    placeholder="Type a command (npm install) or send input to bot..."
+                    onkeypress="if(event.key==='Enter') sendManual()">
+                <button class="btn" style="background:var(--border)" onclick="sendManual()"><i
+                        class="ri-send-plane-fill"></i></button>
+            </div>
+
             <div class="terminal" id="terminal">Waiting for logs...</div>
         </div>
     </div>
@@ -521,6 +530,32 @@
 
         async function startServer() { await fetch('/api/start', { method: 'POST' }); updateStatus(); }
         async function stopServer() { await fetch('/api/stop', { method: 'POST' }); updateStatus(); }
+
+        async function sendManual() {
+            const input = $('manualInput').value;
+            if (!input) return;
+
+            // Check status first
+            const res = await fetch('/api/status');
+            const data = await res.json();
+
+            if (data.running) {
+                // Process running? Send as INPUT
+                await fetch('/api/input', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ input })
+                });
+            } else {
+                // No process? Run as COMMAND
+                await fetch('/api/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: input })
+                });
+            }
+            $('manualInput').value = '';
+        }
 
         async function saveConfig() {
             const cmd = $('cmdInput').value;

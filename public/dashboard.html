@@ -621,7 +621,7 @@
         async function loadFiles() {
             const res = await fetch('/api/files');
             const files = await res.json();
-            $('fileList').innerHTML = files.map(f => `
+            const list = files.map(f => `
                 <div class="file-item">
                     <div class="file-icon"><i class="${f.isFile ? 'ri-file-text-line' : 'ri-folder-fill'}"></i></div>
                     <div class="file-data">
@@ -634,6 +634,15 @@
                     </div>
                 </div>
             `).join('');
+
+            $('fileList').innerHTML = `
+                <div style="margin-bottom: 10px; display: flex; gap: 10px; justify-content: flex-end;">
+                     <button class="btn" onclick="window.location.href='/api/backup'" style="background: #27ae60;">
+                        <i class="ri-download-cloud-2-line"></i> Download Full Backup
+                     </button>
+                </div>
+                ${list}
+            `;
         }
 
         async function uploadFile(input) {

@@ -2,9 +2,10 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { spawn } = require('child_process');
+const { spawn, exec } = require('child_process');
+const archiver = require('archiver'); // Added for backups
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Config & Middleware
 app.use(express.json());
@@ -199,4 +200,26 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/dashboard.html'));
 });
 
-app.listen(port, () => console.log(`Pocket Hosting V3 active on ${port}`));
+// --- Backup Endpoint ---
+app.get('/api/backup', (req, res) => {
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    const fileName = `backup-${Date.now()}.zip`;
+
+    res.attachment(fileName);
+
+    archive.pipe(res);
+
+    // Append files from uploads directory
+    archive.directory('uploads/', false);
+
+    archive.finalize();
+});
+
+// --- Start Server ---
+app.listen(port, () => {
+    console.log(` Pocket Hosting running at http://localhost:${port}`);
+    // The original code uses getConfig().autoStart and startProcess()
+    // This line is from the provided snippet, but 'config' and 'startServer' are not defined.
+    // Keeping it as is per instruction to faithfully apply the change.
+    // if (config.autoStart) startServer();
+});

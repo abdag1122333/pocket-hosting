@@ -1,7 +1,11 @@
 #!/bin/bash
 
+# Ensure we are in the directory of the script (uploads/)
+cd "$(dirname "$0")"
+
 echo "----------------------------------------"
 echo "🔧 MTA Server Installer & Utility"
+echo "📂 Working Directory: $(pwd)"
 echo "----------------------------------------"
 
 # 1. Download Binaries (Engine)

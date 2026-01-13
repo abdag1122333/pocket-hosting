@@ -623,48 +623,71 @@
 
         async function loadFiles(path = '') {
             currentPath = path;
-            const res = await fetch(`/api/files?dir=${encodeURIComponent(path)}`);
-            const files = await res.json();
+            const fileListEl = $('fileList');
+            if (!fileListEl) return console.error('fileList element not found!');
 
-            // Back button logic
-            let backBtn = '';
-            if (path) {
-                const parent = path.split('/').slice(0, -1).join('/');
-                backBtn = `<div class="file-item" onclick="loadFiles('${parent}')" style="cursor: pointer; background: #eee;">
-                    <div class="file-icon"><i class="ri-arrow-go-back-line"></i></div>
-                    <div class="file-data"><span class="file-name">.. (Back)</span></div>
-                </div>`;
+            fileListEl.innerHTML = '<div style="padding:20px; text-align:center;">Loading...</div>';
+
+            try {
+                const res = await fetch(`/api/files?dir=${encodeURIComponent(path)}`);
+                if (!res.ok) throw new Error('API Error');
+                const files = await res.json();
+
+                // Back button logic
+                let backBtn = '';
+                if (path) {
+                    const parent = path.split('/').slice(0, -1).join('/');
+                    backBtn = `<div class="file-item" onclick="loadFiles('${parent}')" style="cursor: pointer; background: #eee;">
+                        <div class="file-icon"><i class="ri-arrow-go-back-line"></i></div>
+                        <div class="file-data"><span class="file-name">.. (Back)</span></div>
+                    </div>`;
+                }
+
+                if (files.length === 0 && !path) {
+                    fileListEl.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">No files found. Upload something!</div>';
+                    return;
+                }
+
+                const list = files.map(f => {
+                    const safeName = f.name.replace(/'/g, "\\'"); // Escape single quotes
+                    const fullPath = path ? path + '/' + safeName : safeName;
+                    const clickAction = f.isFile ? '' : `onclick="loadFiles('${fullPath}')"`;
+                    const cursorStyle = f.isFile ? '' : 'cursor: pointer;';
+                    const icon = f.isFile ? 'ri-file-text-line' : 'ri-folder-fill';
+
+                    return `
+                    <div class="file-item" ${clickAction} style="${cursorStyle}">
+                        <div class="file-icon"><i class="${icon}"></i></div>
+                        <div class="file-data">
+                            <span class="file-name">${f.name}</span>
+                            <span class="file-size">${f.size || 'DIR'}</span>
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            ${f.isFile ? `<button class="btn-icon" onclick="editFile('${fullPath}')"><i class="ri-edit-line"></i></button>` : ''}
+                            <button class="btn-icon" style="color:var(--red)" onclick="delFile('${fullPath}')"><i class="ri-delete-bin-line"></i></button>
+                        </div>
+                    </div>
+                `}).join('');
+
+                fileListEl.innerHTML = `
+                    <div style="margin-bottom: 10px; display: flex; gap: 10px; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.8rem; color: #666;">/${path}</span>
+                        <div style="display:flex; gap:5px;">
+                            <button class="btn" onclick="loadFiles(currentPath)" style="background: #3498db; font-size: 0.8rem; padding: 5px 10px;">
+                                <i class="ri-refresh-line"></i>
+                            </button>
+                            <button class="btn" onclick="window.location.href='/api/backup'" style="background: #27ae60; font-size: 0.8rem;">
+                                <i class="ri-download-cloud-2-line"></i> Backup
+                            </button>
+                        </div>
+                    </div>
+                    ${backBtn}
+                    ${list}
+                `;
+            } catch (err) {
+                console.error(err);
+                fileListEl.innerHTML = `<div style="color:red; padding:10px;">Error loading files: ${err.message}</div>`;
             }
-
-            const list = files.map(f => {
-                // Click action: Enter folder if directory, nothing if file (for now)
-                const clickAction = f.isFile ? '' : `onclick="loadFiles('${path ? path + '/' + f.name : f.name}')"`;
-                const cursorStyle = f.isFile ? '' : 'cursor: pointer;';
-
-                return `
-                <div class="file-item" ${clickAction} style="${cursorStyle}">
-                    <div class="file-icon"><i class="${f.isFile ? 'ri-file-text-line' : 'ri-folder-fill'}"></i></div>
-                    <div class="file-data">
-                        <span class="file-name">${f.name}</span>
-                        <span class="file-size">${f.size || 'DIR'}</span>
-                    </div>
-                    <div style="display:flex; gap:10px;">
-                        ${f.isFile ? `<button class="btn-icon" onclick="editFile('${path ? path + '/' + f.name : f.name}')"><i class="ri-edit-line"></i></button>` : ''}
-                        <button class="btn-icon" style="color:var(--red)" onclick="delFile('${path ? path + '/' + f.name : f.name}')"><i class="ri-delete-bin-line"></i></button>
-                    </div>
-                </div>
-            `}).join('');
-
-            $('fileList').innerHTML = `
-                <div style="margin-bottom: 10px; display: flex; gap: 10px; justify-content: space-between; align-items: center;">
-                     <span style="font-size: 0.8rem; color: #666;">Path: /${path}</span>
-                     <button class="btn" onclick="window.location.href='/api/backup'" style="background: #27ae60; font-size: 0.8rem;">
-                        <i class="ri-download-cloud-2-line"></i> Backup
-                     </button>
-                </div>
-                ${backBtn}
-                ${list}
-            `;
         }
 
         async function uploadFile(input) {

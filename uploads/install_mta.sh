@@ -79,7 +79,19 @@ if [ ! -d "mods/deathmatch/resources" ] || [ -z "$(ls -A mods/deathmatch/resourc
     echo "⚠️ Created empty resources folder. You should upload resources manually."
 fi
 
-# 4. Permissions & Run
+# 4. Tunneling (Playit.gg)
+if [ ! -f "playit" ]; then
+    echo "⬇️ Downloading Playit.gg Tunnel..."
+    curl -ssL https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64 -o playit
+    chmod +x playit
+fi
+
+echo "🔗 Starting Playit.gg Tunnel..."
+echo "⚠️ IMPORTANT: Look for the 'CLAIM URL' below to get your Server IP! 👇"
+./playit &
+sleep 5
+
+# 5. Permissions & Run
 echo "🚀 Starting MTA Server..."
 chmod +x mta-server64
 ./mta-server64 -n

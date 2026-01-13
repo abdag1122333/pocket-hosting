@@ -618,29 +618,51 @@
         }
 
         // --- Files ---
-        async function loadFiles() {
-            const res = await fetch('/api/files');
+        // Global path variable
+        let currentPath = '';
+
+        async function loadFiles(path = '') {
+            currentPath = path;
+            const res = await fetch(`/api/files?dir=${encodeURIComponent(path)}`);
             const files = await res.json();
-            const list = files.map(f => `
-                <div class="file-item">
+
+            // Back button logic
+            let backBtn = '';
+            if (path) {
+                const parent = path.split('/').slice(0, -1).join('/');
+                backBtn = `<div class="file-item" onclick="loadFiles('${parent}')" style="cursor: pointer; background: #eee;">
+                    <div class="file-icon"><i class="ri-arrow-go-back-line"></i></div>
+                    <div class="file-data"><span class="file-name">.. (Back)</span></div>
+                </div>`;
+            }
+
+            const list = files.map(f => {
+                // Click action: Enter folder if directory, nothing if file (for now)
+                const clickAction = f.isFile ? '' : `onclick="loadFiles('${path ? path + '/' + f.name : f.name}')"`;
+                const cursorStyle = f.isFile ? '' : 'cursor: pointer;';
+
+                return `
+                <div class="file-item" ${clickAction} style="${cursorStyle}">
                     <div class="file-icon"><i class="${f.isFile ? 'ri-file-text-line' : 'ri-folder-fill'}"></i></div>
                     <div class="file-data">
                         <span class="file-name">${f.name}</span>
                         <span class="file-size">${f.size || 'DIR'}</span>
                     </div>
                     <div style="display:flex; gap:10px;">
-                        ${f.isFile ? `<button class="btn-icon" onclick="editFile('${f.name}')"><i class="ri-edit-line"></i></button>` : ''}
-                        <button class="btn-icon" style="color:var(--red)" onclick="delFile('${f.name}')"><i class="ri-delete-bin-line"></i></button>
+                        ${f.isFile ? `<button class="btn-icon" onclick="editFile('${path ? path + '/' + f.name : f.name}')"><i class="ri-edit-line"></i></button>` : ''}
+                        <button class="btn-icon" style="color:var(--red)" onclick="delFile('${path ? path + '/' + f.name : f.name}')"><i class="ri-delete-bin-line"></i></button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
 
             $('fileList').innerHTML = `
-                <div style="margin-bottom: 10px; display: flex; gap: 10px; justify-content: flex-end;">
-                     <button class="btn" onclick="window.location.href='/api/backup'" style="background: #27ae60;">
-                        <i class="ri-download-cloud-2-line"></i> Download Full Backup
+                <div style="margin-bottom: 10px; display: flex; gap: 10px; justify-content: space-between; align-items: center;">
+                     <span style="font-size: 0.8rem; color: #666;">Path: /${path}</span>
+                     <button class="btn" onclick="window.location.href='/api/backup'" style="background: #27ae60; font-size: 0.8rem;">
+                        <i class="ri-download-cloud-2-line"></i> Backup
                      </button>
                 </div>
+                ${backBtn}
                 ${list}
             `;
         }

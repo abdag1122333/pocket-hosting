@@ -663,9 +663,12 @@
                             <span class="file-size">${f.size || 'DIR'}</span>
                         </div>
                         <div style="display:flex; gap:10px;">
-                            ${f.isFile ? `<button class="btn-icon" onclick="editFile('${fullPath}')"><i class="ri-edit-line"></i></button>` : ''}
-                            <button class="btn-icon" style="color:var(--red)" onclick="delFile('${fullPath}')"><i class="ri-delete-bin-line"></i></button>
-                        </div>
+                        ${f.isFile ? `
+                            <button class="btn-icon" title="Download" onclick="window.open('/files/${fullPath}', '_blank')"><i class="ri-download-line"></i></button>
+                            <button class="btn-icon" title="Edit" onclick="editFile('${fullPath}')"><i class="ri-edit-line"></i></button>
+                        ` : ''}
+                        <button class="btn-icon" title="Delete" style="color:var(--red)" onclick="delFile('${fullPath}')"><i class="ri-delete-bin-line"></i></button>
+                    </div>
                     </div>
                 `}).join('');
 

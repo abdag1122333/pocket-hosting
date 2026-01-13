@@ -16,18 +16,50 @@ else
     echo "✅ Binaries found."
 fi
 
-# 2. Download Base Config (mtaserver.conf, acl.xml)
+# 2. Download Base Config
 if [ ! -f "mods/deathmatch/mtaserver.conf" ]; then
     echo "⬇️ Downloading Base Configs..."
     curl -L -o config.tar.gz https://linux.mtasa.com/dl/baseconfig.tar.gz
     
     echo "📦 Extracting Configs..."
-    tar -xf config.tar.gz --strip-components=1
+    # Extract to a temp dir to inspect structure
+    mkdir -p temp_config
+    tar -xf config.tar.gz -C temp_config
     rm config.tar.gz
     
-    # Validation
+    # Robustly find the config file
+    CONF_FOUND=$(find temp_config -name "mtaserver.conf" | head -n 1)
+    
+    if [ -z "$CONF_FOUND" ]; then
+        echo "❌ Critical Error: mtaserver.conf not found in archive!"
+        echo "Dump of extracted files:"
+        ls -R temp_config
+        exit 1
+    fi
+    
+    echo "✅ Found config at: $CONF_FOUND"
+    
+    # Determine the root of the config folder (parent of mods/ or the deathmatch folder itself)
+    # Usually baseconfig contains: baseconfig/mods/deathmatch/... OR mods/deathmatch/...
+    # We want to merge 'mods' folder from temp_config to current directory.
+    
+    # Check if 'mods' is at top level of temp_config
+    if [ -d "temp_config/mods" ]; then
+        cp -r temp_config/mods .
+    elif [ -d "temp_config/baseconfig/mods" ]; then
+        cp -r temp_config/baseconfig/mods .
+    else
+        # Fallback: Copy parent dir of deathmatch/mtaserver.conf to mods/deathmatch
+        CONF_DIR=$(dirname "$CONF_FOUND")
+        mkdir -p mods/deathmatch
+        cp -r "$CONF_DIR/"* mods/deathmatch/
+    fi
+    
+    rm -rf temp_config
+    
+    # Final Verification
     if [ ! -f "mods/deathmatch/mtaserver.conf" ]; then
-        echo "❌ Critical Error: mtaserver.conf missing after extraction!"
+        echo "❌ Install Failed: Could not place mtaserver.conf correctly."
         exit 1
     fi
 else

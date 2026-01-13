@@ -93,8 +93,17 @@ if [ ! -f "playit" ]; then
 fi
 
 echo "🔗 Starting Playit.gg Tunnel..."
-echo "⚠️ IMPORTANT: Look for the 'CLAIM URL' below to get your Server IP! 👇"
-./playit &
+if [ -f "playit.toml" ]; then
+    echo "✅ Found saved Playit config! Restoring connection..."
+    # Copy to default location just in case or pass as arg
+    # Playit usually looks in /etc/playit/playit.toml or current dir.
+    # We will try to run it.
+    ./playit --config playit.toml &
+else
+    echo "⚠️ No saved config found. Creates new tunnel."
+    echo "Look for the 'CLAIM URL' below to setup!"
+    ./playit &
+fi
 sleep 5
 
 # 5. Permissions & Run

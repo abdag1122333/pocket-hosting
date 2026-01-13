@@ -604,9 +604,9 @@
                     input.value = 'bash start.sh';
                     break;
                 case 'minecraft':
-                    alert('⚠️ Minecraft Requirement:\nUpload your "server.jar" first!\n\nThis preset will auto-download Amazon Corretto 17 (High Performance).');
-                    // Using Amazon Corretto for maximum stability and speed
-                    $('cmdInput').value = 'curl -L -o java.tar.gz https://corretto.aws/downloads/latest/amazon-corretto-17-x64-linux-jdk.tar.gz && tar -xf java.tar.gz && rm java.tar.gz && mv amazon-corretto-17* jdk17 && ./jdk17/bin/java -Xmx1G -Xms512M -jar server.jar nogui';
+                    alert('⚠️ Minecraft Requirement:\n1. Upload your server file (Paper, Spigot, etc).\n2. RENAME it to "server.jar" (or change the command).\n\nThis preset will auto-download Amazon Corretto 17.');
+                    // Check for server.jar before running
+                    $('cmdInput').value = 'curl -L -o java.tar.gz https://corretto.aws/downloads/latest/amazon-corretto-17-x64-linux-jdk.tar.gz && tar -xf java.tar.gz && rm java.tar.gz && mv amazon-corretto-17* jdk17 && if [ ! -f server.jar ]; then echo "❌ Error: server.jar not found! Upload it and rename to server.jar"; else ./jdk17/bin/java -Xmx1G -Xms512M -jar server.jar nogui; fi';
                     break;
                 case 'mta':
                     alert('⚠️ MTA Setup:\nUsing new "Robust Installer" script.\nIt will fix the config errors automatically.');

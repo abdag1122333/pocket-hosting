@@ -602,8 +602,8 @@
                 $('cmdInput').value = 'curl -sL https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz | tar xz && ./jdk-17.0.11/bin/java -Xmx512M -jar server.jar nogui';
             }
             if (type === 'mta') {
-                alert('⚠️ MTA Setup:\nAuto-downloading fixed! (Added redirect support).\n\nIf this fails, please upload the files manually.');
-                $('cmdInput').value = '[ ! -f mta-server ] && curl -L -o mta.tar.gz https://linux.mtasa.com/dl/multitheftauto_linux_x64.tar.gz && tar -xf mta.tar.gz --strip-components=1 && rm mta.tar.gz; chmod +x mta-server && ./mta-server';
+                alert('⚠️ MTA Setup:\nCorrected binary name to "mta-server64".\n\nStarting download...');
+                $('cmdInput').value = '[ ! -f mta-server64 ] && curl -L -o mta.tar.gz https://linux.mtasa.com/dl/multitheftauto_linux_x64.tar.gz && tar -xf mta.tar.gz --strip-components=1 && rm mta.tar.gz; chmod +x mta-server64 && ./mta-server64';
             }
             if (type === 'custom') $('cmdInput').value = './my-custom-script.sh';
         }

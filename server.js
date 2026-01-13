@@ -116,13 +116,25 @@ app.get('/api/files', (req, res) => {
     // Prevent directory traversal attacks
     if (subDir.includes('..')) return res.status(400).json({ error: 'Invalid path' });
 
-    const targetPath = path.join(UPLOAD_DIR, subDir);
+    const targetPath = path.resolve(UPLOAD_DIR, subDir);
+    const rootPath = path.resolve(UPLOAD_DIR);
+
+    // Debug logging
+    console.log(`[Files API] Request: ${subDir}`);
+    console.log(`[Files API] Target: ${targetPath}`);
+    console.log(`[Files API] Root: ${rootPath}`);
 
     // Verify the path is still within uploads directory
-    if (!targetPath.startsWith(UPLOAD_DIR)) return res.status(403).json({ error: 'Access denied' });
+    if (!targetPath.startsWith(rootPath)) {
+        console.error('[Files API] Access Denied: Path is outside root.');
+        return res.status(403).json({ error: 'Access denied' });
+    }
 
     fs.readdir(targetPath, (err, files) => {
-        if (err) return res.json([]);
+        if (err) {
+            console.error(`[Files API] Error reading dir: ${err.message}`);
+            return res.json([]);
+        }
         const data = files.map(f => {
             try {
                 const s = fs.statSync(path.join(targetPath, f));

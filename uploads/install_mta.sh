@@ -97,14 +97,15 @@ if [ ! -f "playit" ]; then
 fi
 
 echo "🔗 Starting Playit.gg Tunnel..."
-if [ -f "playit.toml" ]; then
-    echo "✅ Found saved Playit config! Restoring connection..."
-    # Copy to default location just in case or pass as arg
-    # Playit usually looks in /etc/playit/playit.toml or current dir.
-    # We will try to run it.
-    ./playit --config playit.toml &
+CONFIG_FILE="$(pwd)/playit.toml"
+
+if [ -f "$CONFIG_FILE" ]; then
+    echo "✅ Found saved Playit config at: $CONFIG_FILE"
+    echo "🔄 Restoring connection..."
+    ./playit --config "$CONFIG_FILE" &
 else
-    echo "⚠️ No saved config found. Creates new tunnel."
+    echo "⚠️ No saved config found at: $CONFIG_FILE"
+    echo "   (Current Dir contents: $(ls))"
     echo "Look for the 'CLAIM URL' below to setup!"
     ./playit &
 fi

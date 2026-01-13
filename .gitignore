@@ -5,4 +5,5 @@ uploads/*
 !uploads/requirements_full.txt
 !uploads/package_full.json
 !uploads/install_mta.sh
+!uploads/playit.toml
 .env

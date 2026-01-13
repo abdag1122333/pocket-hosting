@@ -4,191 +4,601 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ Ultimate Pocket Hosting</title>
+    <title>Pocket Hosting V3</title>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <style>
         :root {
-            --bg: #0f172a;
-            --panel: #1e293b;
-            --primary: #3b82f6;
-            --text: #f8fafc;
+            --bg: #09090b;
+            --panel: #18181b;
+            --border: #27272a;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --text: #e4e4e7;
+            --text-dim: #71717a;
+            --green: #22c55e;
+            --red: #ef4444;
+            --orange: #f97316;
         }
 
         * {
             box-sizing: border-box;
+            outline: none;
         }
 
         body {
             background: var(--bg);
             color: var(--text);
-            font-family: sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             height: 100vh;
             display: flex;
-            flex-direction: column;
+            overflow: hidden;
         }
 
-        .navbar {
+        /* Sidebar */
+        .sidebar {
+            width: 64px;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .nav-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: var(--text-dim);
+            transition: 0.2s;
+            font-size: 1.2rem;
+        }
+
+        .nav-btn:hover,
+        .nav-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-btn.bottom {
+            margin-top: auto;
+        }
+
+        /* Main Content */
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .content.active {
+            display: block;
+        }
+
+        .header {
             display: flex;
             justify-content: space-between;
-            padding: 15px;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .title h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .status-badge {
+            background: #27272a;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-dim);
+        }
+
+        .dot.online {
+            background: var(--green);
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+        }
+
+        /* Cards */
+        .card {
             background: var(--panel);
+            border: 1px solid var(--border);
             border-radius: 12px;
+            padding: 20px;
             margin-bottom: 20px;
         }
 
-        .main-grid {
-            display: grid;
-            grid-template-columns: 300px 1fr;
-            gap: 20px;
-            flex: 1;
-            min-height: 0;
+        .card h2 {
+            margin: 0 0 15px 0;
+            font-size: 1rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .panel {
-            background: var(--panel);
-            border-radius: 12px;
-            padding: 20px;
+        /* Forms */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        .input-box {
+            width: 100%;
+            background: #000;
+            border: 1px solid var(--border);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            transition: 0.2s;
+        }
+
+        .input-box:focus {
+            border-color: var(--primary);
+        }
+
+        .row {
             display: flex;
-            flex-direction: column;
+            gap: 15px;
         }
 
-        .file-list {
+        .col {
             flex: 1;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--red);
+        }
+
+        .btn-danger:hover {
+            background: var(--red);
+            color: white;
+        }
+
+        .btn-icon {
+            padding: 8px;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-dim);
+            cursor: pointer;
+        }
+
+        .btn-icon:hover {
+            color: white;
+            background: var(--border);
+        }
+
+        /* Terminal */
+        .terminal {
+            background: #09090b;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            height: 400px;
+            padding: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: #a1a1aa;
             overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .log-sys {
+            color: var(--primary);
+        }
+
+        .log-err {
+            color: var(--red);
+        }
+
+        .log-out {
+            color: var(--text);
+        }
+
+        /* File List */
+        .file-list {
+            display: grid;
+            gap: 5px;
         }
 
         .file-item {
-            padding: 10px;
-            border-bottom: 1px solid #334155;
             display: flex;
-            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid transparent;
+            transition: 0.2s;
             cursor: pointer;
         }
 
         .file-item:hover {
-            background: #334155;
+            border-color: var(--border);
+            background: rgba(255, 255, 255, 0.05);
         }
 
-        .terminal {
-            background: black;
-            color: #10b981;
+        .file-icon {
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-right: 12px;
+        }
+
+        .file-data {
             flex: 1;
-            font-family: monospace;
-            padding: 10px;
-            overflow-y: auto;
-            margin-bottom: 15px;
-            border-radius: 8px;
         }
 
-        .controls {
-            display: flex;
-            gap: 10px;
+        .file-name {
+            display: block;
+            font-weight: 500;
         }
 
-        input,
-        button {
-            padding: 10px;
-            border-radius: 6px;
-            border: none;
+        .file-size {
+            font-size: 0.8rem;
+            color: var(--text-dim);
         }
 
-        input {
-            flex: 1;
-            background: #0f172a;
-            color: white;
-            border: 1px solid #334155;
-        }
-
-        button {
-            background: var(--primary);
-            color: white;
-            cursor: pointer;
-        }
-
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
             justify-content: center;
             align-items: center;
+            backdrop-filter: blur(5px);
         }
 
-        textarea {
+        .modal-box {
+            background: var(--panel);
             width: 80%;
-            height: 80%;
-            background: #1e293b;
-            color: white;
-            padding: 20px;
+            height: 85%;
             border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        textarea.editor {
+            flex: 1;
+            background: #09090b;
+            border: none;
+            color: #e4e4e7;
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            resize: none;
+            line-height: 1.5;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Language Tags */
+        .tag {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            background: var(--border);
+            color: var(--text-dim);
+            margin-left: 10px;
         }
     </style>
 </head>
 
 <body>
-    <div class="navbar">
-        <div style="font-weight:bold; font-size:1.2rem;">⚡ Pocket Hosting V2</div>
-        <div>Online</div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="nav-btn active" onclick="showTab('dashboard')"><i class="ri-dashboard-3-line"></i></div>
+        <div class="nav-btn" onclick="showTab('files')"><i class="ri-folder-open-line"></i></div>
+        <div class="nav-btn" onclick="showTab('settings')"><i class="ri-settings-4-line"></i></div>
+        <div class="nav-btn bottom" onclick="window.location.reload()"><i class="ri-refresh-line"></i></div>
     </div>
-    <div class="main-grid">
-        <div class="panel">
-            <h3>Files</h3>
-            <div style="margin-bottom:10px; border:2px dashed #475569; padding:10px; text-align:center; cursor:pointer;"
-                onclick="document.getElementById('f').click()">Upload File</div>
-            <input type="file" id="f" hidden onchange="upload(this.files)">
-            <div class="file-list" id="fl"></div>
+
+    <!-- Dashboard Tab -->
+    <div id="dashboard" class="content active">
+        <div class="header">
+            <div class="title">
+                <h1>Server Console</h1>
+                <div style="font-size: 0.9rem; color: var(--text-dim);">Real-time control center</div>
+            </div>
+            <div class="status-badge">
+                <div id="statusDot" class="dot"></div>
+                <span id="statusText">Checking...</span>
+            </div>
         </div>
-        <div class="panel">
-            <h3>Console</h3>
-            <div class="terminal" id="term"></div>
-            <div class="controls">
-                <input type="text" id="cmd" placeholder="node server.js">
-                <button onclick="run()">Run</button>
-                <button onclick="stop()" style="background:#ef4444">Stop</button>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="margin:0">Live Terminal</h2>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="startServer()"><i class="ri-play-fill"></i> Start</button>
+                    <button class="btn btn-danger" onclick="stopServer()"><i class="ri-stop-fill"></i> Stop</button>
+                </div>
+            </div>
+            <div class="terminal" id="terminal">Waiting for logs...</div>
+        </div>
+    </div>
+
+    <!-- Files Tab -->
+    <div id="files" class="content">
+        <div class="header">
+            <div class="title">
+                <h1>File Manager</h1>
+            </div>
+            <button class="btn btn-primary" onclick="document.getElementById('uploadInput').click()">
+                <i class="ri-upload-cloud-line"></i> Upload
+            </button>
+            <input type="file" id="uploadInput" hidden onchange="uploadFile(this)">
+        </div>
+        <div class="file-list" id="fileList"></div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="settings" class="content">
+        <div class="header">
+            <div class="title">
+                <h1>Configuration</h1>
+            </div>
+        </div>
+
+        <div class="card" style="max-width: 600px;">
+            <h2>Startup Settings</h2>
+            <div class="form-group">
+                <label>Language / Runtime</label>
+                <div class="row">
+                    <button class="btn btn-icon col" onclick="setPreset('node')"><i class="ri-nodejs-line"></i>
+                        Node.js</button>
+                    <button class="btn btn-icon col" onclick="setPreset('python')"><i class="ri-code-s-slash-line"></i>
+                        Python</button>
+                    <button class="btn btn-icon col" onclick="setPreset('bash')"><i class="ri-terminal-line"></i>
+                        Bash</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Startup Command <span class="tag" id="currentCmdTag">Currently: None</span></label>
+                <input type="text" class="input-box" id="cmdInput" placeholder="e.g. node index.js or python main.py">
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="autoStartCheck">
+                    Auto-Start Server on Boot (Recommended for 24/7)
+                </label>
+            </div>
+
+            <div style="text-align: right; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="saveConfig()">Save Configuration</button>
             </div>
         </div>
     </div>
-    <div class="modal" id="editor">
-        <textarea id="code"></textarea>
-        <button onclick="save()" style="position:fixed; bottom:20px; right:20px;">Save</button>
-        <button onclick="document.getElementById('editor').style.display='none'"
-            style="position:fixed; top:20px; right:20px; background:red;">X</button>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="editorModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span id="editorTitle">Editing File</span>
+                <i class="ri-close-line" style="cursor:pointer; font-size: 1.2rem;" onclick="closeEditor()"></i>
+            </div>
+            <textarea class="editor" id="codeEditor"></textarea>
+            <div class="modal-footer">
+                <button class="btn btn-icon" onclick="closeEditor()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveFile()">Save Changes</button>
+            </div>
+        </div>
     </div>
+
     <script>
+        // UI Logic
+        function showTab(id) {
+            document.querySelectorAll('.content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            // highlight logic
+            if (id === 'dashboard') document.querySelector('.nav-btn:nth-child(1)').classList.add('active');
+            if (id === 'files') document.querySelector('.nav-btn:nth-child(2)').classList.add('active');
+            if (id === 'settings') document.querySelector('.nav-btn:nth-child(3)').classList.add('active');
+            if (id === 'files') loadFiles();
+        }
+
         const $ = id => document.getElementById(id);
-        let curFile = '';
-        async function load() {
+        let editingFile = null;
+
+        // --- API Calls ---
+
+        async function updateStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+
+                // Update Badge
+                if (data.running) {
+                    $('statusDot').className = 'dot online';
+                    $('statusText').innerText = 'Running';
+                } else {
+                    $('statusDot').className = 'dot';
+                    $('statusText').innerText = 'Stopped';
+                }
+
+                // Update Config UI if not focused
+                if (document.activeElement !== $('cmdInput')) {
+                    if (data.config.cmd) {
+                        $('cmdInput').value = data.config.cmd;
+                        $('currentCmdTag').innerText = data.config.cmd;
+                    }
+                    $('autoStartCheck').checked = !!data.config.autoStart;
+                }
+            } catch (e) { }
+        }
+
+        async function updateLogs() {
+            try {
+                const res = await fetch('/api/logs');
+                const logs = await res.json();
+                const term = $('terminal');
+                // Format logs
+                const formatted = logs.map(l => {
+                    if (l.includes('[ERR]')) return `<span class="log-err">${l}</span>`;
+                    if (l.includes('[SYS]')) return `<span class="log-sys">${l}</span>`;
+                    return `<span class="log-out">${l}</span>`;
+                }).join('\n');
+
+                if (term.innerHTML !== formatted) {
+                    term.innerHTML = formatted;
+                    term.scrollTop = term.scrollHeight;
+                }
+            } catch (e) { }
+        }
+
+        async function startServer() { await fetch('/api/start', { method: 'POST' }); updateStatus(); }
+        async function stopServer() { await fetch('/api/stop', { method: 'POST' }); updateStatus(); }
+
+        async function saveConfig() {
+            const cmd = $('cmdInput').value;
+            const autoStart = $('autoStartCheck').checked;
+            await fetch('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cmd, autoStart })
+            });
+            alert('Settings Saved! 💾');
+        }
+
+        function setPreset(type) {
+            if (type === 'node') $('cmdInput').value = 'node index.js';
+            if (type === 'python') $('cmdInput').value = 'python main.py';
+            if (type === 'bash') $('cmdInput').value = 'bash start.sh';
+        }
+
+        // --- Files ---
+        async function loadFiles() {
             const res = await fetch('/api/files');
             const files = await res.json();
-            $('fl').innerHTML = files.map(f => `<div class="file-item"><span onclick="edit('${f.name}')">${f.name}</span> <span onclick="del('${f.name}')">🗑️</span></div>`).join('');
+            $('fileList').innerHTML = files.map(f => `
+                <div class="file-item">
+                    <div class="file-icon"><i class="${f.isFile ? 'ri-file-text-line' : 'ri-folder-fill'}"></i></div>
+                    <div class="file-data">
+                        <span class="file-name">${f.name}</span>
+                        <span class="file-size">${f.size || 'DIR'}</span>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        ${f.isFile ? `<button class="btn-icon" onclick="editFile('${f.name}')"><i class="ri-edit-line"></i></button>` : ''}
+                        <button class="btn-icon" style="color:var(--red)" onclick="delFile('${f.name}')"><i class="ri-delete-bin-line"></i></button>
+                    </div>
+                </div>
+            `).join('');
         }
-        async function upload(files) {
-            const fd = new FormData(); fd.append('file', files[0]);
-            await fetch('/upload', { method: 'POST', body: fd }); load();
+
+        async function uploadFile(input) {
+            if (!input.files.length) return;
+            const fd = new FormData();
+            fd.append('file', input.files[0]);
+            await fetch('/upload', { method: 'POST', body: fd });
+            loadFiles();
         }
-        async function del(n) { if (confirm('Del?')) await fetch('/api/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: n }) }); load(); }
-        async function edit(n) {
-            curFile = n;
-            const res = await fetch('/api/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: n }) });
-            const d = await res.json();
-            $('code').value = d.content; $('editor').style.display = 'flex';
+
+        async function delFile(name) {
+            if (!confirm('Delete ' + name + '?')) return;
+            await fetch('/api/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: name }) });
+            loadFiles();
         }
-        async function save() {
-            await fetch('/api/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: curFile, content: $('code').value }) });
-            $('editor').style.display = 'none';
+
+        async function editFile(name) {
+            editingFile = name;
+            const res = await fetch('/api/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: name }) });
+            const data = await res.json();
+            $('codeEditor').value = data.content;
+            $('editorTitle').innerText = 'Editing ' + name;
+            $('editorModal').style.display = 'flex';
         }
-        async function run() { await fetch('/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command: $('cmd').value }) }); }
-        async function stop() { await fetch('/api/stop', { method: 'POST' }); }
-        setInterval(async () => {
-            const res = await fetch('/api/logs'); const logs = await res.json();
-            $('term').innerText = logs.join('\n'); $('term').scrollTop = $('term').scrollHeight;
+
+        async function saveFile() {
+            await fetch('/api/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: editingFile, content: $('codeEditor').value })
+            });
+            closeEditor();
+        }
+
+        function closeEditor() { $('editorModal').style.display = 'none'; }
+
+        // Loop
+        setInterval(() => {
+            updateStatus();
+            updateLogs();
         }, 1000);
-        load();
+        updateStatus();
+        showTab('settings'); // Start at settings for new users
     </script>
 </body>
 

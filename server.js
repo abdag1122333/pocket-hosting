@@ -110,11 +110,23 @@ app.use('/files', express.static(UPLOAD_DIR));
 
 // File API
 app.get('/api/files', (req, res) => {
-    fs.readdir(UPLOAD_DIR, (err, files) => {
+    // Securely handle subdirectories
+    const subDir = req.query.dir || '';
+
+    // Prevent directory traversal attacks
+    if (subDir.includes('..')) return res.status(400).json({ error: 'Invalid path' });
+
+    const targetPath = path.join(UPLOAD_DIR, subDir);
+
+    // Verify the path is still within uploads directory
+    if (!targetPath.startsWith(UPLOAD_DIR)) return res.status(403).json({ error: 'Access denied' });
+
+    fs.readdir(targetPath, (err, files) => {
         if (err) return res.json([]);
         const data = files.map(f => {
             try {
-                const s = fs.statSync(path.join(UPLOAD_DIR, f));
+                const s = fs.statSync(path.join(targetPath, f));
+                // Tag folders so frontend knows how to handle them
                 return { name: f, size: (s.size / 1024).toFixed(1) + ' KB', isFile: s.isFile() };
             } catch (e) { return null; }
         }).filter(x => x);

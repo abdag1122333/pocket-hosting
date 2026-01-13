@@ -426,7 +426,7 @@
         <div class="card" style="max-width: 600px;">
             <h2>Startup Settings</h2>
             <div class="form-group">
-                <label>Language / Runtime</label>
+                <label>App / Bot Presets</label>
                 <div class="row">
                     <button class="btn btn-icon col" onclick="setPreset('node')"><i class="ri-nodejs-line"></i>
                         Node.js</button>
@@ -436,9 +436,25 @@
                         Bash</button>
                 </div>
             </div>
+
+            <div class="form-group">
+                <label>Game Server Presets (Experimental)</label>
+                <div class="row">
+                    <button class="btn btn-icon col" onclick="setPreset('minecraft')"><i class="ri-hammer-fill"></i>
+                        Minecraft</button>
+                    <button class="btn btn-icon col" onclick="setPreset('mta')"><i class="ri-gamepad-fill"></i>
+                        MTA:SA</button>
+                    <button class="btn btn-icon col" onclick="setPreset('custom')"><i class="ri-settings-5-fill"></i>
+                        Custom</button>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label>Startup Command <span class="tag" id="currentCmdTag">Currently: None</span></label>
                 <input type="text" class="input-box" id="cmdInput" placeholder="e.g. node index.js or python main.py">
+                <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 5px;">
+                    ⚠️ Game servers may require external tunneling (like Playit.gg) as Render only opens HTTP ports.
+                </div>
             </div>
 
             <div class="form-group">
@@ -579,6 +595,17 @@
             if (type === 'node') $('cmdInput').value = 'npm install && node index.js';
             if (type === 'python') $('cmdInput').value = 'pip install -r requirements.txt --break-system-packages && python main.py';
             if (type === 'bash') $('cmdInput').value = 'bash start.sh';
+
+            // Experimental Game Presets (Downloads portable runtimes)
+            if (type === 'minecraft') {
+                alert('⚠️ Minecraft Requirement:\nUpload your "server.jar" first!\n\nThis preset will auto-download Java 17 each time.');
+                $('cmdInput').value = 'curl -sL https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz | tar xz && ./jdk-17.0.11/bin/java -Xmx512M -jar server.jar nogui';
+            }
+            if (type === 'mta') {
+                alert('⚠️ MTA Requirement:\nEnsure you have uploaded the MTA Linux server files.');
+                $('cmdInput').value = 'chmod +x mta-server && ./mta-server';
+            }
+            if (type === 'custom') $('cmdInput').value = './my-custom-script.sh';
         }
 
         // --- Files ---

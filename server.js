@@ -147,8 +147,28 @@ app.get('/api/files', (req, res) => {
 });
 
 app.post('/api/delete', (req, res) => {
-    try { fs.unlinkSync(path.join(UPLOAD_DIR, req.body.filename)); res.json({ success: true }); }
-    catch (e) { res.status(500).json({ error: e.message }); }
+    const target = path.resolve(UPLOAD_DIR, req.body.path);
+    if (!target.startsWith(path.resolve(UPLOAD_DIR))) return res.status(403).json({ error: 'Access denied' });
+
+    fs.rm(target, { recursive: true, force: true }, (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
+app.post('/api/rename', (req, res) => {
+    const oldPath = path.resolve(UPLOAD_DIR, req.body.oldPath);
+    const newPath = path.resolve(UPLOAD_DIR, req.body.newPath);
+    const root = path.resolve(UPLOAD_DIR);
+
+    if (!oldPath.startsWith(root) || !newPath.startsWith(root)) {
+        return res.status(403).json({ error: 'Access denied' });
+    }
+
+    fs.rename(oldPath, newPath, (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
 });
 
 app.post('/api/read', (req, res) => {

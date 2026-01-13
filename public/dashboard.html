@@ -668,6 +668,7 @@
                             <button class="btn-icon" title="Download" onclick="window.open('/files/${fullPath}', '_blank')"><i class="ri-download-line"></i></button>
                             <button class="btn-icon" title="Edit" onclick="editFile('${fullPath}')"><i class="ri-edit-line"></i></button>
                         ` : ''}
+                        <button class="btn-icon" title="Rename" onclick="renameFile('${fullPath}')"><i class="ri-input-method-line"></i></button>
                         <button class="btn-icon" title="Delete" style="color:var(--red)" onclick="delFile('${fullPath}')"><i class="ri-delete-bin-line"></i></button>
                     </div>
                     </div>
@@ -702,10 +703,35 @@
             loadFiles();
         }
 
-        async function delFile(name) {
-            if (!confirm('Delete ' + name + '?')) return;
-            await fetch('/api/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: name }) });
-            loadFiles();
+        async function delFile(path) {
+            if (!confirm(`Delete ${path}?`)) return;
+            await fetch('/api/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path })
+            });
+            loadFiles(currentPath);
+        }
+
+        async function renameFile(oldPath) {
+            const newName = prompt("Enter new name:", oldPath.split('/').pop());
+            if (!newName) return;
+
+            // Construct new path respecting the current directory
+            const dir = oldPath.includes('/') ? oldPath.substring(0, oldPath.lastIndexOf('/')) : '';
+            const newPath = dir ? `${dir}/${newName}` : newName;
+
+            const res = await fetch('/api/rename', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ oldPath, newPath })
+            });
+
+            if (res.ok) {
+                loadFiles(currentPath);
+            } else {
+                alert('Rename failed!');
+            }
         }
 
         async function editFile(name) {
